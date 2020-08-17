@@ -1,10 +1,10 @@
 version: '3.5'
 services:
     mongo:
-        image: 'bitnami/mongodb:4.0.3'
+        image: 'bitnami/mongodb:4.2.1'
         environment:
             - MONGODB_USERNAME=haidar
             - MONGODB_PASSWORD=Passw0rd
             - MONGODB_DATABASE=cinemaDB
         ports:
-            - 8080:8080
+            - 27017:27017
