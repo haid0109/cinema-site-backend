@@ -99,10 +99,18 @@ module.exports = function(connection){
         _id: {
             type: String,
             default: () => uuidv4(),
-            required: true
+            required: true,
+            unique: true
         },
-        name: String,
-        length: Date
+        name: {
+            type: String,
+            required,
+        },
+        length: Date,
+        bio: String,
+        releaseDate: Date,
+        cover: Buffer,
+        trailer: String
     });
     this.Movie = connection.model('movie', MovieSchema);
 }
