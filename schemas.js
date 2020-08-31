@@ -23,7 +23,6 @@ module.exports = function(connection){
             type: String,
             default: () => uuidv4(),
             required: true,
-            unique: true
         },
         email: {
             type: String,
@@ -51,7 +50,6 @@ module.exports = function(connection){
             type: String,
             default: () => uuidv4(),
             required: true,
-            unique: true
         },
         email: {
             type: String,
@@ -97,7 +95,6 @@ module.exports = function(connection){
             type: String,
             default: () => uuidv4(),
             required: true,
-            unique: true
         },
         location: {
             type: String,
@@ -117,11 +114,10 @@ module.exports = function(connection){
             type: String,
             default: () => uuidv4(),
             required: true,
-            unique: true
         },
         name: {
             type: String,
-            required,
+            required: true,
         },
         length: Date,
         bio: String,
@@ -136,7 +132,6 @@ module.exports = function(connection){
             type: String,
             default: () => uuidv4(),
             required: true,
-            unique: true
         },
         movieId: {
             type: String,
