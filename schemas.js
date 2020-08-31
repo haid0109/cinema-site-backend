@@ -54,6 +54,47 @@ module.exports = function(connection){
     });
     this.User = connection.model('user', UserSchema);
 
+    const SeatSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        type: {
+            type: String,
+            required: true,
+        }
+    });
+
+    const RowSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        type: [SeatSchema]
+    });
+
+    const HallSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+            unique: true
+        },
+        location: {
+            type: String,
+            required: true,
+        },
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        type: [RowSchema]
+    });
+    this.Hall = connection.model('hall', HallSchema);
+
     const MovieSchema = new mongoose.Schema({
         _id: {
             type: String,
