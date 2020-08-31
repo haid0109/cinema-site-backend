@@ -2,6 +2,21 @@ const mongoose = require('mongoose');
 const {v4: uuidv4} = require('uuid');
 
 module.exports = function(connection){
+    const CinemaSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        address: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        numOfStaff: Number,
+        numOfHalls: Number
+    })
+
     const StaffSchema = new mongoose.Schema({
         _id: {
             type: String,
@@ -63,6 +78,7 @@ module.exports = function(connection){
         type: {
             type: String,
             required: true,
+            enum: ['Normal', 'VIP', 'Couple']
         }
     });
 
