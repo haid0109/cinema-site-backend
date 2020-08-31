@@ -1,4 +1,4 @@
-module.exports.start = async function start(app, Movie){
+module.exports.start = async function start(app, Cinema, Staff, User, Hall, Movie, Ticket){
     app.get('/people', async (req, res) => {
         Person.find()
         .then((people) => res.send(people))

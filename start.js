@@ -16,11 +16,16 @@ const Application = module.exports = function(){
 Application.prototype.initialize = async function initialize(){
     await this.mongoose;
     const models = new Models(this.mongoose);
+    this.Cinema = models.Cinema;
+    this.Staff = models.Staff;
+    this.User = models.User;
+    this.Hall = models.Hall;
     this.Movie = models.Movie;
+    this.Ticket = models.Ticket;
 }
 
 Application.prototype.start = async function start(){
-    Endpoints.start(app, this.Movie);
+    Endpoints.start(app, this.Cinema, this.Staff, this.User, this.Hall, this.Movie, this.Ticket);
 }
 
 app.use(express.json());
