@@ -15,7 +15,8 @@ module.exports = function(connection){
         },
         numOfStaff: Number,
         numOfHalls: Number
-    })
+    });
+    this.Cinema = connection.model('cinema', CinemaSchema);
 
     const StaffSchema = new mongoose.Schema({
         _id: {
@@ -129,4 +130,62 @@ module.exports = function(connection){
         trailer: String
     });
     this.Movie = connection.model('movie', MovieSchema);
+    
+    const TicketSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+            unique: true
+        },
+        movieId: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        type: {
+            type: String,
+            required: true,
+            enum: ['Normal', 'VIP', 'Couple']
+        },
+        address: {
+            type: String,
+            required: true
+        },
+        hall: {
+            type: String,
+            required: true
+        },
+        row: {
+            type: String,
+            required: true
+        },
+        seat: {
+            type: String,
+            required: true
+        },
+        movieSart: {
+            type: Date,
+            required: true
+        },
+        movieEnd: {
+            type: Date,
+            required: true
+        },
+        movieLength: {
+            type: Date,
+            required: true
+        },
+        status: {
+            type: String,
+            required: true,
+            enum: ['Ready', 'Reserved', 'Sold']
+        },
+        phoneNum: Number,
+        code: String,
+    });
+    this.Ticket = connection.model('ticket', TicketSchema);
 }
