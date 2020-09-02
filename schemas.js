@@ -123,7 +123,33 @@ module.exports = function(connection){
         bio: String,
         releaseDate: Date,
         cover: Buffer,
-        trailer: String
+        trailer: String,
+        rating: {
+            type: String,
+            enum: ['G', 'PG', 'PG-13', 'R', 'NC-17']
+        },
+        genre: {
+            type: [String],
+            enum: [
+                'Action', 
+                'Drama', 
+                'Adventure', 
+                'Comedy', 
+                'Animation',
+                'Sci-Fi',
+                'Fantasy',
+                'Crime',
+                'Thriller',
+                'Family',
+                'Romance',
+                'Mystery',
+                'Sport',
+                'Horro',
+                'War',
+                'History',
+                'Music'
+            ]
+        }
     });
     this.Movie = connection.model('movie', MovieSchema);
     
