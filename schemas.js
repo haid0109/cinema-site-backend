@@ -119,6 +119,11 @@ module.exports = function(connection){
             type: String,
             required: true,
         },
+        status: {
+            type: String,
+            required: true,
+            enum: ['coming soon', 'in cinemas', 'expired']
+        },
         length: Date,
         bio: String,
         releaseDate: Date,
