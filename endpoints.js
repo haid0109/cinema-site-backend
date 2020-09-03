@@ -1,4 +1,25 @@
 module.exports.start = async function start(app, Cinema, Staff, User, Hall, Movie, Ticket){
+    app.get('/cinema/names', async (req, res) => {
+        Cinema.find({}, 'name')
+        .then((names) => res.send(names))
+        .catch((err) => {
+            console.log('failed to retrieve cinema names');
+            res.status(500).send();
+        });
+    });
+
+    app.post('/cinema', async (req, res) => {
+        Cinema.create({
+            'name': req.body.name,
+            'address': req.body.address,
+        })
+        .then(() => res.send())
+        .catch((err) => {
+            console.log('failed to create cinema');
+            res.status(500).send();
+        })
+    });
+
     app.get('/people', async (req, res) => {
         Person.find()
         .then((people) => res.send(people))
