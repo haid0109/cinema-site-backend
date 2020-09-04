@@ -20,6 +20,15 @@ module.exports.start = async function start(app, Cinema, Staff, User, Hall, Movi
         })
     });
 
+    app.get('/movie/names', async (req, res) => {
+        Movie.find({}, 'name')
+        .then((names) => res.send(names))
+        .catch((err) => {
+            console.log('failed to retrieve movie names');
+            res.status(500).send();
+        });
+    });
+
     app.get('/people', async (req, res) => {
         Person.find()
         .then((people) => res.send(people))
