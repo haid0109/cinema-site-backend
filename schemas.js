@@ -1,50 +1,7 @@
 const mongoose = require('mongoose');
-const {v4: uuidv4} = require('uuid');
+const {v4: uuidv4, stringify} = require('uuid');
 
 module.exports = function(connection){
-    const CinemaSchema = new mongoose.Schema({
-        name: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        address: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        numOfStaff: Number,
-        numOfHalls: Number
-    });
-    this.Cinema = connection.model('cinema', CinemaSchema);
-
-    const StaffSchema = new mongoose.Schema({
-        _id: {
-            type: String,
-            default: () => uuidv4(),
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        password: {
-            type: String,
-            required: true
-        },
-        phoneNum: {
-            type: Number,
-            required: true,
-            unique: true
-        },
-        fullName: {
-            type: String,
-            required: true
-        }
-    });
-    this.Staff = connection.model('staff', StaffSchema);
-
     const UserSchema = new mongoose.Schema({
         _id: {
             type: String,
@@ -63,10 +20,40 @@ module.exports = function(connection){
         phoneNum: {
             type: Number,
             unique: true
-        },
-        fullName: String
+        }
     });
     this.User = connection.model('user', UserSchema);
+
+    const StaffSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+        },
+        fullName: {
+            type: String,
+            required: true
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        password: {
+            type: String,
+            required: true
+        },
+        phoneNum: {
+            type: Number,
+            required: true,
+            unique: true
+        },
+        address: {
+            type: String,
+            required: true,
+            unique: true
+        },
+    });
 
     const SeatSchema = new mongoose.Schema({
         name: {
@@ -87,17 +74,22 @@ module.exports = function(connection){
             required: true,
             unique: true
         },
-        type: [SeatSchema]
+        seats: [SeatSchema]
     });
 
     const HallSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        rows: [RowSchema]
+    });
+
+    const CinemaSchema = new mongoose.Schema({
         _id: {
             type: String,
             default: () => uuidv4(),
-            required: true,
-        },
-        location: {
-            type: String,
             required: true,
         },
         name: {
@@ -105,9 +97,90 @@ module.exports = function(connection){
             required: true,
             unique: true
         },
-        type: [RowSchema]
+        address: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        staff: [StaffSchema],
+        halls: [HallSchema]
     });
-    this.Hall = connection.model('hall', HallSchema);
+    this.Cinema = connection.model('cinema', CinemaSchema);
+    
+    const TicketSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        row: {
+            type: String,
+            required: true
+        },
+        seat: {
+            type: String,
+            required: true
+        },
+        status: {
+            type: String,
+            required: true,
+            enum: ['Ready', 'Reserved', 'Sold']
+        },
+        phoneNum: {
+            type: Number,
+            required: true
+        },
+        code: {
+            type: String,
+            required: true
+        },
+    });
+
+    const PerformanceSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+        },
+        start: {
+            type: Date,
+            required: true,
+        },
+        end: {
+            type: Date,
+            required: true,
+        },
+        numOfSeats: {
+            type: Number,
+            required: true,
+        },
+        seatsLeft: {
+            type: Number,
+            required: true,
+        },
+        status: {
+            type: String,
+            required: true,
+            enum: ['Available', 'Sold Out']
+        },
+        cinema: {
+            type: String,
+            required: true,
+        },
+        address: {
+            type: String,
+            required: true,
+        },
+        hall: {
+            type: String,
+            required: true,
+        },
+        tickets: [TicketSchema]
+    });
 
     const MovieSchema = new mongoose.Schema({
         _id: {
@@ -126,7 +199,7 @@ module.exports = function(connection){
         },
         length: Date,
         bio: String,
-        releaseDate: Date,
+        release: Date,
         cover: Buffer,
         trailer: String,
         rating: {
@@ -154,64 +227,8 @@ module.exports = function(connection){
                 'History',
                 'Music'
             ]
-        }
+        },
+        performances: [PerformanceSchema]
     });
     this.Movie = connection.model('movie', MovieSchema);
-    
-    const TicketSchema = new mongoose.Schema({
-        _id: {
-            type: String,
-            default: () => uuidv4(),
-            required: true,
-        },
-        movieId: {
-            type: String,
-            required: true
-        },
-        price: {
-            type: Number,
-            required: true
-        },
-        type: {
-            type: String,
-            required: true,
-            enum: ['Normal', 'VIP', 'Couple']
-        },
-        address: {
-            type: String,
-            required: true
-        },
-        hall: {
-            type: String,
-            required: true
-        },
-        row: {
-            type: String,
-            required: true
-        },
-        seat: {
-            type: String,
-            required: true
-        },
-        movieSart: {
-            type: Date,
-            required: true
-        },
-        movieEnd: {
-            type: Date,
-            required: true
-        },
-        movieLength: {
-            type: Date,
-            required: true
-        },
-        status: {
-            type: String,
-            required: true,
-            enum: ['Ready', 'Reserved', 'Sold']
-        },
-        phoneNum: Number,
-        code: String,
-    });
-    this.Ticket = connection.model('ticket', TicketSchema);
 }
