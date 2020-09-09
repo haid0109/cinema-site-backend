@@ -16,16 +16,13 @@ const Application = module.exports = function(){
 Application.prototype.initialize = async function initialize(){
     await this.mongoose;
     const models = new Models(this.mongoose);
-    this.Cinema = models.Cinema;
-    this.Staff = models.Staff;
     this.User = models.User;
-    this.Hall = models.Hall;
+    this.Cinema = models.Cinema;
     this.Movie = models.Movie;
-    this.Ticket = models.Ticket;
 }
 
 Application.prototype.start = async function start(){
-    Endpoints.start(app, this.Cinema, this.Staff, this.User, this.Hall, this.Movie, this.Ticket);
+    Endpoints.start(app, this.User, this.Cinema, this.Movie);
 }
 
 app.use(function (req, res, next) {
