@@ -197,7 +197,7 @@ module.exports = function(connection){
             required: true,
             enum: ['coming soon', 'in cinemas', 'expired']
         },
-        length: Date,
+        length: String,
         bio: String,
         release: Date,
         cover: Buffer,
@@ -222,7 +222,7 @@ module.exports = function(connection){
                 'Romance',
                 'Mystery',
                 'Sport',
-                'Horro',
+                'Horror',
                 'War',
                 'History',
                 'Music'
