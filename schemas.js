@@ -154,6 +154,10 @@ module.exports = function(connection){
             type: Date,
             required: true,
         },
+        cleanUpEnd: {
+            type: Date,
+            required: true,
+        },
         numOfSeats: {
             type: Number,
             required: true,
@@ -188,7 +192,7 @@ module.exports = function(connection){
             default: () => uuidv4(),
             required: true,
         },
-        name: {
+        title: {
             type: String,
             required: true,
         },
