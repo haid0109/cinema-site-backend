@@ -19,7 +19,8 @@ module.exports = function(connection){
         },
         phoneNum: {
             type: Number,
-            unique: true
+            unique: true,
+            sparse: true
         }
     });
     this.User = connection.model('user', UserSchema);
@@ -37,7 +38,8 @@ module.exports = function(connection){
         email: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
         password: {
             type: String,
@@ -46,12 +48,14 @@ module.exports = function(connection){
         phoneNum: {
             type: Number,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
         address: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
     });
 
@@ -59,7 +63,8 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
         type: {
             type: String,
@@ -72,7 +77,8 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
         seats: [SeatSchema]
     });
@@ -81,7 +87,8 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            sparse: true
         },
         rows: [RowSchema]
     });
@@ -149,14 +156,20 @@ module.exports = function(connection){
         start: {
             type: Date,
             required: true,
+            unique: true,
+            sparse: true
         },
         end: {
             type: Date,
             required: true,
+            unique: true,
+            sparse: true
         },
         cleanUpEnd: {
             type: Date,
             required: true,
+            unique: true,
+            sparse: true
         },
         numOfSeats: {
             type: Number,
@@ -169,7 +182,7 @@ module.exports = function(connection){
         status: {
             type: String,
             required: true,
-            enum: ['Available', 'Sold Out']
+            enum: ['Available', 'Sold Out', 'Expired']
         },
         cinema: {
             type: String,
@@ -195,11 +208,12 @@ module.exports = function(connection){
         title: {
             type: String,
             required: true,
+            unique: true
         },
         status: {
             type: String,
             required: true,
-            enum: ['coming soon', 'in cinemas', 'expired']
+            enum: ['Coming Soon', 'In Cinemas', 'Expired']
         },
         length: String,
         bio: String,
