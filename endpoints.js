@@ -1,95 +1,85 @@
 module.exports.start = async function start(app, upload, User, Cinema, Movie){
-    app.get('/cinema/names', async (req, res) => {
-        Cinema.find({}, 'name')
-        .then((names) => res.send(names))
+    app.post('/cinema', async (req, res) => {
+        Cinema.create(req.body)
+        .then(() => res.send())
         .catch((err) => {
-            console.log('failed to retrieve cinema names');
+            console.log('failed to create cinema: ', err);
             res.status(500).send();
         });
     });
 
-    app.post('/cinema', async (req, res) => {
-        Cinema.create({
-            'name': req.body.name,
-            'address': req.body.address,
-        })
+    app.get('/cinema/names', async (req, res) => {
+        Cinema.find({}, 'name')
+        .then((names) => res.send(names))
+        .catch((err) => {
+            console.log('failed to retrieve cinema names: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.post('/movie', async (req, res) => {
+        Movie.create(req.body)
         .then(() => res.send())
         .catch((err) => {
-            console.log('failed to create cinema');
+            console.log('failed to create movie: ', err);
             res.status(500).send();
-        })
+        });
     });
 
     app.get('/movie/names', async (req, res) => {
         Movie.find({}, 'name')
         .then((names) => res.send(names))
         .catch((err) => {
-            console.log('failed to retrieve movie names');
+            console.log('failed to retrieve movie names: ', err);
             res.status(500).send();
         });
     });
 
-    app.get('/people', async (req, res) => {
-        Person.find()
-        .then((people) => res.send(people))
+    app.get('/movie/cards/:movieId/:cinema/:dateRange', async (req, res) => {
+        const movieId = req.params.movieId;
+        const cinema = req.params.cinema;
+        const dateRange = req.params.dateRange;
+
+        Movie.aggregate([
+            {'$match': {'_id': movieId}},
+            {'$project': {
+                'title': true,
+                'cover': true,
+                'length': true,
+                'performances': {'$filter': {
+                    'input': '$performances',
+                    'as': 'performance',
+                    'cond': {
+                        '$and': [
+                            {'$eq': ['$$performance.cinema', cinema]},
+                            {'$gte': ['$$performance.start', dateRange.dayStart]},
+                            {'$lte': ['$$performance.start', dateRange.dayEnd]}
+                        ]
+                    }
+                }}
+            }}
+        ])
+        .then((cards) => res.send(cards))
         .catch((err) => {
-            console.log('failed to retrieve people');
+            console.log('failed to retrieve movie cards: ', err);
             res.status(500).send();
         });
     });
+
+    app.post('/movie/performance/:movieId', async (req, res) => {
+        const movieId = req.params.movieId;
+
+        try {
+            const movie = await Movie.findOne({'_id': movieId});
+
+            movie.performances.push(req.body);
+            await movie.save();
     
-    app.get('/person/:name', async (req, res) => {
-        let name = req.params.name;
-        Person.findOne({'name': name})
-        .then((person) => {
-            if(!person) return res.status(204).send('no person with that name');
-            res.send(person);
-        })
-        .catch((err) => {
-            console.log('failed to retrieve person');
+            res.send();
+        } catch (err) {
+            console.log('failed to create performance: ', err);
             res.status(500).send();
-        });
+        }
     });
-    
-    app.post('/person', async (req, res) => {
-        Person.create({
-            'name': req.body.name,
-            'age': req.body.age,
-            'married': req.body.married,
-        })
-        .then(() => res.send())
-        .catch((err) => {
-            console.log('failed to create person');
-            res.status(500).send();
-        })
-    });
-    
-    app.put('/person/:name', async (req, res) => {
-        let name = req.params.name;
-        Person.updateOne(
-            {'name': name},
-            {'$set':
-                {
-                    'name': req.body.name,
-                    'age': req.body.age,
-                    'married': req.body.married,
-                }
-            }
-        )
-        .then(() => res.send())
-        .catch((err) => {
-            console.log('failed to update person info');
-            res.status(500).send();
-        })
-    });
-    
-    app.delete('/person/:name', async (req, res) => {
-        let name = req.params.name;
-        Person.findOneAndRemove({'name': name})
-        .then(() => res.send())
-        .catch((err) => {
-            console.log('failed to delete person');
-            res.status(500).send();
-        })
-    });
+
 }
