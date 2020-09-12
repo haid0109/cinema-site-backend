@@ -1,4 +1,8 @@
-module.exports.start = async function start(app, upload, User, Cinema, Movie){
+const multer = require('multer');
+
+const upload = multer({storage: multer.memoryStorage()});
+
+module.exports.start = async function start(app, User, Cinema, Movie){
     app.post('/cinema', async (req, res) => {
         Cinema.create(req.body)
         .then(() => res.send())

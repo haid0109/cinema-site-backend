@@ -1,12 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const multer = require('multer');
 
 const Models = require('./schemas');
 const Endpoints = require('./endpoints');
 
 const app = express();
-const upload = multer({storage: multer.memoryStorage()});
 
 const Application = module.exports = function(){
     this.mongoose = mongoose.createConnection('mongodb://haidar:Passw0rd@localhost:27017/cinemaDB', {
@@ -26,7 +24,7 @@ Application.prototype.initialize = async function initialize(){
 }
 
 Application.prototype.start = async function start(){
-    Endpoints.start(app, upload, this.User, this.Cinema, this.Movie);
+    Endpoints.start(app, this.User, this.Cinema, this.Movie);
 }
 
 app.use(function (req, res, next) {
