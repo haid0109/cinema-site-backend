@@ -41,9 +41,9 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.get('/movie/cards/:movieId/:cinema/:dateRange', async (req, res) => {
+    app.get('/movie/cards/:movieId/:cinemaId/:dateRange', async (req, res) => {
         const movieId = req.params.movieId;
-        const cinema = req.params.cinema;
+        const cinemaId = req.params.cinemaId;
         const dateRange = req.params.dateRange;
 
         Movie.aggregate([
@@ -57,7 +57,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
                     'as': 'performance',
                     'cond': {
                         '$and': [
-                            {'$eq': ['$$performance.cinema', cinema]},
+                            {'$eq': ['$$performance.cinemaId', cinemaId]},
                             {'$gte': ['$$performance.start', dateRange.dayStart]},
                             {'$lte': ['$$performance.start', dateRange.dayEnd]}
                         ]

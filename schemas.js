@@ -184,7 +184,7 @@ module.exports = function(connection){
             required: true,
             enum: ['Available', 'Sold Out', 'Expired']
         },
-        cinema: {
+        cinemaId: {
             type: String,
             required: true,
         },
