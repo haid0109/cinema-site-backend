@@ -1,5 +1,6 @@
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const upload = multer({storage: multer.memoryStorage()});
 
