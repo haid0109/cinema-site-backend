@@ -4,6 +4,38 @@ const bcrypt = require('bcrypt');
 
 const upload = multer({storage: multer.memoryStorage()});
 
+const verifyToken = async function(req, res, next) {
+    const token = req.headers.authorization.split(' ')[1];
+    const role = req.headers.role;
+
+    if(role == 'user'){
+        try {
+            const decodedToken = jwt.verify(token, 'cinemix top secret, user secret key');
+            req._id = decodedToken._id;
+        } catch (error) {
+            if(err.message == 'invalid signature')
+                return res.status(401).send({msg: 'you need to log in'});
+            return res.status(500).send({msg: 'something went wrong, try again'});
+        }
+    }
+    else if(role == 'admin'){
+        try {
+            const decodedToken = jwt.verify(token, 'cinemix top secret, admin secret key');
+            req._id = decodedToken._id;
+        } catch (error) {
+            if(err.message == 'invalid signature')
+                return res.status(401).send({msg: 'you need to log in'});
+            return res.status(500).send({msg: 'something went wrong, try again'});
+        }
+    }
+    else{
+        console.log('headers are wrong');
+        return res.status(500).send({msg: 'something went wrong, try again'});
+    }
+
+    next();
+}
+
 module.exports.start = async function start(app, User, Cinema, Movie){
     app.post('/user', async (req, res) => {
         try {
