@@ -5,6 +5,47 @@ const bcrypt = require('bcrypt');
 const upload = multer({storage: multer.memoryStorage()});
 
 module.exports.start = async function start(app, User, Cinema, Movie){
+    app.post('/user', async (req, res) => {
+        try {
+            req.body.password = bcrypt.hashSync(req.body.password, 10);
+            const user = new User(req.body);
+            const token = jwt.sign(
+                {_id: user._id},
+                'cinemix top secret, user secret key',
+                {expiresIn: 86400}
+            );
+            await user.save();
+            res.send(token);
+        } catch (err) {
+            console.log('failed to create user: ', err);
+            res.status(500).send();
+        }
+    });
+
+    app.get('/user/login/:email/:password', async (req, res) => {
+        const credentials = {
+            email: req.params.email,
+            password: req.params.password
+        }
+
+        User.findOne({email: credentials.email})
+        .then((user) => {
+            if(!user) return res.status(404).send({msg: 'user not found'});
+            if(!bcrypt.compareSync(credentials.password, user.password))
+                return res.status(400).send({msg: 'email or password is incorrect'});
+            const token = jwt.sign(
+                {_id: user._id},
+                'cinemix top secret, user secret key',
+                {expiresIn: 86400}
+            );
+            res.send(token);
+        })
+        .catch((err) => {
+            console.log('failed to login user: ', err);
+            res.status(500).send();
+        });
+    });
+
     app.post('/cinema', async (req, res) => {
         Cinema.create(req.body)
         .then(() => res.send())
