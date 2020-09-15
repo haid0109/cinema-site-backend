@@ -48,7 +48,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         .then((user) => {
             if(!user) return res.status(404).send({msg: 'user not found'});
             if(!bcrypt.compareSync(credentials.password, user.password))
-                return res.status(400).send({msg: 'email or password is incorrect'});
+                return res.status(400).send({msg: 'password is incorrect'});
             const token = jwt.sign(
                 {_id: user._id},
                 'cinemix top secret, user secret key',
