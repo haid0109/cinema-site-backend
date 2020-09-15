@@ -11,7 +11,7 @@ const verifyToken = async function(req, res, next) {
     try {
         const decodedToken = jwt.verify(token, `cinemix top secret, ${role} secret key`);
         req._id = decodedToken._id;
-    } catch (error) {
+    } catch (err) {
         if(err.message == 'invalid signature')
             return res.status(401).send({msg: 'you need to log in'});
         return res.status(500).send({msg: 'something went wrong, try again'});
@@ -23,6 +23,7 @@ const verifyToken = async function(req, res, next) {
 module.exports.start = async function start(app, User, Cinema, Movie){
     app.post('/user', async (req, res) => {
         try {
+            console.log(req.body);
             req.body.password = bcrypt.hashSync(req.body.password, 10);
             const user = new User(req.body);
             const token = jwt.sign(
@@ -34,6 +35,8 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             res.send(token);
         } catch (err) {
             console.log('failed to create user: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'email must be unique'});
             res.status(500).send();
         }
     });
