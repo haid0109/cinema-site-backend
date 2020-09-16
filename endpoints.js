@@ -23,7 +23,6 @@ const verifyToken = async function(req, res, next) {
 module.exports.start = async function start(app, User, Cinema, Movie){
     app.post('/user', async (req, res) => {
         try {
-            console.log(req.body);
             req.body.password = bcrypt.hashSync(req.body.password, 10);
             const user = new User(req.body);
             const token = jwt.sign(
@@ -41,10 +40,12 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
-    app.get('/user/login/:email/:password', async (req, res) => {
-        const credentials = {
-            email: req.params.email,
-            password: req.params.password
+    app.get('/user/login/:credentials', async (req, res) => {
+        let credentials = {};
+        try {credentials = JSON.parse(req.params.credentials);}
+        catch (err) {
+            console.log('failed to parse credentials: ', err);
+            res.status(400).send();
         }
 
         User.findOne({email: credentials.email})
@@ -55,6 +56,56 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             const token = jwt.sign(
                 {_id: user._id},
                 'cinemix top secret, user secret key',
+                {expiresIn: 86400}
+            );
+            res.send(token);
+        })
+        .catch((err) => {
+            console.log('failed to login user: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.post('/admin/:cinemaId', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        try {
+            req.body.password = bcrypt.hashSync(req.body.password, 12);
+            let cinema = await Cinema.findOne({'_id': cinemaId});
+            cinema.staff.push(req.body);
+            await cinema.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to create user: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'email must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.get('/admin/login/:cinemaId/:credentials', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        let credentials = {};
+        try {credentials = JSON.parse(req.params.credentials);}
+        catch (err) {
+            console.log('failed to parse credentials: ', err);
+            res.status(400).send();
+        }
+
+        Cinema.findOne(
+            {
+                '_id': cinemaId,
+                'staff.email': credentials.email
+            },
+            'staff.$'
+        )
+        .then((cinema) => {
+            if(!cinema) return res.status(404).send({msg: 'user not found'});
+            const admin = cinema.staff[0];
+            if(!bcrypt.compareSync(credentials.password, admin.password))
+                return res.status(400).send({msg: 'password is incorrect'});
+            const token = jwt.sign(
+                {_id: admin._id},
+                'cinemix top secret, admin secret key',
                 {expiresIn: 86400}
             );
             res.send(token);
