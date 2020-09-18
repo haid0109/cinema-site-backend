@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const upload = multer({storage: multer.memoryStorage()});
 
 const verifyToken = async function(req, res, next) {
+    if(!req.headers.authorization || !req.headers.role)
+        return res.status(401).send({msg: 'you need to log in'});
     const token = req.headers.authorization.split(' ')[1];
     const role = req.headers.role;
 
@@ -75,7 +77,36 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             await cinema.save();
             res.send();
         } catch (err) {
-            console.log('failed to create user: ', err);
+            console.log('failed to create admin: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'email must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.put('/admin/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        try {
+            let query = {};
+            if(req.body.fullName){query['staff.$.fullName'] = req.body.fullName;}
+            if(req.body.email){query['staff.$.email'] = req.body.email;}
+            if(req.body.password){
+                req.body.password = bcrypt.hashSync(req.body.password, 12);
+                query['staff.$.password'] = req.body.password;
+            }
+            if(req.body.phoneNum){query['staff.$.phoneNum'] = req.body.phoneNum;}
+            if(req.body.address){query['staff.$.address'] = req.body.address;}
+
+            await Cinema.updateOne(
+                {'_id': cinemaId, 'staff._id': req._id},
+                {
+                    '$set': query
+                }
+            );
+
+            res.send();
+        } catch (err) {
+            console.log('failed to update admin: ', err);
             if(err.name == 'MongoError' && err.code == 11000)
                 return res.status(403).send({msg: 'email must be unique'});
             res.status(500).send();
@@ -111,12 +142,12 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             res.send(token);
         })
         .catch((err) => {
-            console.log('failed to login user: ', err);
+            console.log('failed to login admin: ', err);
             res.status(500).send();
         });
     });
 
-    app.get('/admin/names/:cinemaId', verifyToken, async (req, res) => {
+    app.get('/admin/names/:cinemaId', async (req, res) => {
         const cinemaId = req.params.cinemaId;
 
         Cinema.findOne({'_id':  cinemaId}, 'staff')
