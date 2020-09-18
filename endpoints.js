@@ -66,7 +66,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.post('/admin/:cinemaId', async (req, res) => {
+    app.post('/admin/:cinemaId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
         try {
             req.body.password = bcrypt.hashSync(req.body.password, 12);
@@ -112,6 +112,17 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         })
         .catch((err) => {
             console.log('failed to login user: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.get('/admin/names/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        Cinema.findOne({'_id':  cinemaId}, 'staff')
+        .then((cinema) => res.send(cinema.staff))
+        .catch((err) => {
+            console.log('failed to retrieve admin names: ', err);
             res.status(500).send();
         });
     });
