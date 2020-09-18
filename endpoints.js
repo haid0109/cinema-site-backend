@@ -160,13 +160,98 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.get('/admin/names/:cinemaId', async (req, res) => {
+    app.get('/admin/names/:cinemaId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
 
         Cinema.findOne({'_id':  cinemaId}, 'staff')
         .then((cinema) => res.send(cinema.staff))
         .catch((err) => {
             console.log('failed to retrieve admin names: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.post('/movie', verifyToken, upload.single('cover'), async (req, res) => {
+        let parsedMovie = JSON.parse(req.body.movie);
+        let movieObj = {
+            title: parsedMovie.title,
+            status: parsedMovie.status,
+            length: parsedMovie.length,
+            bio: parsedMovie.bio,
+            trailer: parsedMovie.trailer,
+            rating: parsedMovie.rating,
+            genre: parsedMovie.genre,
+        }
+        if(parsedMovie.release){
+            movieObj.release = new Date(
+                parsedMovie.release.substring(4, 0),
+                parsedMovie.release.substring(7, 5) - 1,
+                parsedMovie.release.substring(10, 8)
+            );
+        }
+        if(req.file) movieObj.cover = req.file.buffer;
+
+        try {
+            let movie = new Movie(movieObj);
+            await movie.save();
+            return res.send();
+        } catch (err) {
+            console.log('failed to create movie: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'title must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.put('/movie/:movieId', verifyToken, upload.single('cover'), async (req, res) => {
+        const movieId = req.params.movieId;
+
+        try {
+            let parsedMovie = JSON.parse(req.body.movie);
+            let movie = await Movie.findOne({'_id': movieId});
+            if(!movie) return res.status(404).send({msg: 'movie does not exist'});
+
+            movie.title = parsedMovie.title;
+            movie.status = parsedMovie.status;
+            movie.length = parsedMovie.length;
+            movie.bio = parsedMovie.bio;
+            movie.trailer = parsedMovie.trailer;
+            movie.rating = parsedMovie.rating;
+            movie.genre = parsedMovie.genre;
+
+            if(parsedMovie.release){
+                movie.release = new Date(
+                    parsedMovie.release.substring(4, 0),
+                    parsedMovie.release.substring(7, 5) - 1,
+                    parsedMovie.release.substring(10, 8)
+                );
+            }
+            if(req.file) movie.cover = req.file.buffer;
+
+            await movie.save();
+            return res.send();
+        } catch (err) {
+            console.log('failed to update movie: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'title must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.delete('/movie', verifyToken, upload.single('cover'), async (req, res) => {
+        Movie.deleteOne({'_id': req.body._id})
+        .then(() => res.send())
+        .catch((err) => {
+            console.log('failed to delete movie: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.get('/movie/titles', async (req, res) => {
+        Movie.find({}, 'title')
+        .then((names) => res.send(names))
+        .catch((err) => {
+            console.log('failed to retrieve movie titles: ', err);
             res.status(500).send();
         });
     });
@@ -185,24 +270,6 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         .then((names) => res.send(names))
         .catch((err) => {
             console.log('failed to retrieve cinema names: ', err);
-            res.status(500).send();
-        });
-    });
-
-    app.post('/movie', async (req, res) => {
-        Movie.create(req.body)
-        .then(() => res.send())
-        .catch((err) => {
-            console.log('failed to create movie: ', err);
-            res.status(500).send();
-        });
-    });
-
-    app.get('/movie/names', async (req, res) => {
-        Movie.find({}, 'name')
-        .then((names) => res.send(names))
-        .catch((err) => {
-            console.log('failed to retrieve movie names: ', err);
             res.status(500).send();
         });
     });
