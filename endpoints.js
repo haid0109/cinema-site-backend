@@ -113,6 +113,19 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
+    app.delete('/admin/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        try {
+            let cinema = await Cinema.findOne({'_id': cinemaId});
+            cinema.staff.pull(req.body._id);
+            await cinema.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to delete admin: ', err);
+            res.status(500).send();
+        }
+    });
+
     app.get('/admin/login/:cinemaId/:credentials', async (req, res) => {
         const cinemaId = req.params.cinemaId;
         let credentials = {};
