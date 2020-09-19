@@ -84,6 +84,26 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
+    app.get('/admin/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        Cinema.findOne(
+            {
+                '_id':  cinemaId,
+                'staff._id': req._id
+            },
+            'staff.$'
+        )
+        .then((cinema) => {
+            cinema.staff[0].password = '';
+            res.send(cinema.staff[0]);
+        })
+        .catch((err) => {
+            console.log('failed to retrieve admin: ', err);
+            res.status(500).send();
+        });
+    });
+
     app.put('/admin/:cinemaId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
         try {
