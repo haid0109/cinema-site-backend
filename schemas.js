@@ -18,7 +18,7 @@ module.exports = function(connection){
             required: true
         },
         phoneNum: {
-            type: Number,
+            type: String,
             unique: true,
             sparse: true
         }
@@ -46,7 +46,7 @@ module.exports = function(connection){
             required: true
         },
         phoneNum: {
-            type: Number,
+            type: String,
             required: true,
             unique: true,
             sparse: true
@@ -113,7 +113,7 @@ module.exports = function(connection){
         halls: [HallSchema]
     });
     this.Cinema = connection.model('cinema', CinemaSchema);
-    
+
     const TicketSchema = new mongoose.Schema({
         _id: {
             type: String,
@@ -138,7 +138,7 @@ module.exports = function(connection){
             enum: ['Ready', 'Reserved', 'Sold']
         },
         phoneNum: {
-            type: Number,
+            type: String,
             required: true
         },
         code: {
