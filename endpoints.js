@@ -223,6 +223,17 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
+    app.get('/movie/:movieId', async (req, res) => {
+        const movieId = req.params.movieId;
+
+        Movie.findOne({'_id':  movieId})
+        .then((movie) => res.send(movie))
+        .catch((err) => {
+            console.log('failed to retrieve movies: ', err);
+            res.status(500).send();
+        });
+    });
+
     app.put('/movie/:movieId', verifyToken, upload.single('cover'), async (req, res) => {
         const movieId = req.params.movieId;
 
@@ -231,14 +242,13 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             let movie = await Movie.findOne({'_id': movieId});
             if(!movie) return res.status(404).send({msg: 'movie does not exist'});
 
-            movie.title = parsedMovie.title;
-            movie.status = parsedMovie.status;
-            movie.length = parsedMovie.length;
-            movie.bio = parsedMovie.bio;
-            movie.trailer = parsedMovie.trailer;
-            movie.rating = parsedMovie.rating;
-            movie.genre = parsedMovie.genre;
-
+            if(parsedMovie.title) movie.title = parsedMovie.title;
+            if(parsedMovie.status) movie.status = parsedMovie.status;
+            if(parsedMovie.length) movie.length = parsedMovie.length;
+            if(parsedMovie.bio) movie.bio = parsedMovie.bio;
+            if(parsedMovie.trailer) movie.trailer = parsedMovie.trailer;
+            if(parsedMovie.rating) movie.rating = parsedMovie.rating;
+            if(parsedMovie.genre) movie.genre = parsedMovie.genre;
             if(parsedMovie.release){
                 movie.release = new Date(
                     parsedMovie.release.substring(4, 0),
@@ -267,7 +277,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.get('/movie/titles', async (req, res) => {
+    app.get('/movies/titles', async (req, res) => {
         Movie.find({}, 'title')
         .then((names) => res.send(names))
         .catch((err) => {
