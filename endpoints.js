@@ -286,24 +286,6 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.post('/cinema', async (req, res) => {
-        Cinema.create(req.body)
-        .then(() => res.send())
-        .catch((err) => {
-            console.log('failed to create cinema: ', err);
-            res.status(500).send();
-        });
-    });
-
-    app.get('/cinema/names', async (req, res) => {
-        Cinema.find({}, 'name')
-        .then((names) => res.send(names))
-        .catch((err) => {
-            console.log('failed to retrieve cinema names: ', err);
-            res.status(500).send();
-        });
-    });
-
     app.get('/movie/cards/:movieId/:cinemaId/:dateRange', async (req, res) => {
         const movieId = req.params.movieId;
         const cinemaId = req.params.cinemaId;
@@ -349,6 +331,24 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             console.log('failed to create performance: ', err);
             res.status(500).send();
         }
+    });
+
+    app.post('/cinema', async (req, res) => {
+        Cinema.create(req.body)
+        .then(() => res.send())
+        .catch((err) => {
+            console.log('failed to create cinema: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.get('/cinema/names', async (req, res) => {
+        Cinema.find({}, 'name')
+        .then((names) => res.send(names))
+        .catch((err) => {
+            console.log('failed to retrieve cinema names: ', err);
+            res.status(500).send();
+        });
     });
 
 }
