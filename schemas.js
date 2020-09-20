@@ -65,11 +65,6 @@ module.exports = function(connection){
             required: true,
             unique: true,
             sparse: true
-        },
-        type: {
-            type: String,
-            required: true,
-            enum: ['Normal', 'VIP', 'Couple']
         }
     });
 
@@ -80,10 +75,20 @@ module.exports = function(connection){
             unique: true,
             sparse: true
         },
+        type: {
+            type: String,
+            required: true,
+            enum: ['Normal', 'VIP', 'Couple']
+        },
         seats: [SeatSchema]
     });
 
     const HallSchema = new mongoose.Schema({
+        _id: {
+            type: String,
+            default: () => uuidv4(),
+            required: true,
+        },
         name: {
             type: String,
             required: true,
