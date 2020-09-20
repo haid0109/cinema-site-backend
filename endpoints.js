@@ -212,7 +212,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         if(req.file) movieObj.cover = req.file.buffer;
 
         try {
-            let movie = new Movie(movieObj);
+            const movie = new Movie(movieObj);
             await movie.save();
             return res.send();
         } catch (err) {
@@ -333,16 +333,59 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
-    app.post('/cinema', async (req, res) => {
-        Cinema.create(req.body)
-        .then(() => res.send())
-        .catch((err) => {
+    app.post('/cinema', verifyToken, async (req, res) => {
+        try {
+            const cinema = new Cinema(req.body);
+            await cinema.save();
+            return res.send();
+        } catch (err) {
             console.log('failed to create cinema: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'name and address must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.get('/cinema/:cinemaId', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        Cinema.findOne({'_id':  cinemaId})
+        .then((cinema) => res.send(cinema))
+        .catch((err) => {
+            console.log('failed to retrieve cinema: ', err);
             res.status(500).send();
         });
     });
 
-    app.get('/cinema/names', async (req, res) => {
+    app.put('/cinema/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        try {
+            let cinema = await Cinema.findOne({'_id': cinemaId});
+            if(!cinema) return res.status(404).send({msg: 'cinema does not exist'});
+            if(req.body.name) cinema.name = req.body.name;
+            if(req.body.address) cinema.address = req.body.address;
+
+            await cinema.save();
+            return res.send();
+        } catch (err) {
+            console.log('failed to update cinema: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'name and address must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.delete('/cinema', verifyToken, async (req, res) => {
+        Cinema.deleteOne({'_id': req.body._id})
+        .then(() => res.send())
+        .catch((err) => {
+            console.log('failed to delete movie: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.get('/cinemas/names', async (req, res) => {
         Cinema.find({}, 'name')
         .then((names) => res.send(names))
         .catch((err) => {
@@ -351,4 +394,92 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
+    app.post('/hall/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        try {
+            let cinema = await Cinema.findOne({'_id': cinemaId});
+            cinema.halls.push(req.body);
+            await cinema.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to create hall: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'hall name must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.get('/hall/:cinemaId/:hallId', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        const hallId = req.params.hallId;
+
+        Cinema.findOne(
+            {
+                '_id':  cinemaId,
+                'halls._id': hallId
+            },
+            'halls.$'
+        )
+        .then((cinema) => res.send(cinema.halls[0]))
+        .catch((err) => {
+            console.log('failed to retrieve cinema: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.put('/hall/:cinemaId/:hallId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        const hallId = req.params.hallId;
+
+        try {
+            let query = {};
+            if(req.body.name){query['halls.$.name'] = req.body.name;}
+            if(req.body.rows.length > 0){query['halls.$.rows'] = req.body.rows;}
+
+            await Cinema.updateOne(
+                {'_id': cinemaId, 'halls._id': hallId},
+                {
+                    '$set': query
+                }
+            );
+
+            res.send();
+        } catch (err) {
+            console.log('failed to update admin: ', err);
+            if(err.name == 'MongoError' && err.code == 11000)
+                return res.status(403).send({msg: 'email must be unique'});
+            res.status(500).send();
+        }
+    });
+
+    app.delete('/hall/:cinemaId', verifyToken, async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        try {
+            let cinema = await Cinema.findOne({'_id': cinemaId});
+            cinema.halls.pull(req.body._id);
+            await cinema.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to delete hall: ', err);
+            res.status(500).send();
+        }
+    });
+
+    app.get('/halls/names/:cinemaId', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+
+        Cinema.findOne(
+            {'_id':  cinemaId},
+            {
+                'halls.name': 1,
+                'halls._id': 1
+            }
+        )
+        .then((cinema) => res.send(cinema.halls))
+        .catch((err) => {
+            console.log('failed to retrieve halls names: ', err);
+            res.status(500).send();
+        });
+    });
 }
