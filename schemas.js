@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const {v4: uuidv4, stringify} = require('uuid');
+const otpGenerator = require('otp-generator');
 
 module.exports = function(connection){
     const UserSchema = new mongoose.Schema({
@@ -136,13 +137,17 @@ module.exports = function(connection){
             required: true,
             enum: ['Ready', 'Reserved', 'Sold']
         },
-        phoneNum: {
-            type: String,
-            required: true
-        },
+        email: String,
+        phoneNum: String,
         code: {
             type: String,
-            required: true
+            default: () => otpGenerator.generate(6, {
+                digits: true,
+                alphabets: false,
+                upperCase: false,
+                specialChars: false
+            }),
+            required: true,
         },
     });
 
