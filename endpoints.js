@@ -394,7 +394,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.post('/hall/:cinemaId', verifyToken, async (req, res) => {
+    app.post('/cinema/hall/:cinemaId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
 
         try {
@@ -410,7 +410,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
-    app.get('/hall/:cinemaId/:hallId', async (req, res) => {
+    app.get('/cinema/hall/:cinemaId/:hallId', async (req, res) => {
         const cinemaId = req.params.cinemaId;
         const hallId = req.params.hallId;
 
@@ -428,7 +428,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.put('/hall/:cinemaId/:hallId', verifyToken, async (req, res) => {
+    app.put('/cinema/hall/:cinemaId/:hallId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
         const hallId = req.params.hallId;
 
@@ -453,7 +453,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
-    app.delete('/hall/:cinemaId', verifyToken, async (req, res) => {
+    app.delete('/cinema/hall/:cinemaId', verifyToken, async (req, res) => {
         const cinemaId = req.params.cinemaId;
         try {
             let cinema = await Cinema.findOne({'_id': cinemaId});
@@ -466,7 +466,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
-    app.get('/halls/names/:cinemaId', async (req, res) => {
+    app.get('/cinema/halls/names/:cinemaId', async (req, res) => {
         const cinemaId = req.params.cinemaId;
 
         Cinema.findOne(
