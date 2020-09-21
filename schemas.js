@@ -63,8 +63,6 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true,
-            sparse: true
         }
     });
 
@@ -72,8 +70,6 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true,
-            sparse: true
         },
         type: {
             type: String,
@@ -92,8 +88,6 @@ module.exports = function(connection){
         name: {
             type: String,
             required: true,
-            unique: true,
-            sparse: true
         },
         rows: [RowSchema]
     });
@@ -197,7 +191,7 @@ module.exports = function(connection){
             type: String,
             required: true,
         },
-        hall: {
+        hallId: {
             type: String,
             required: true,
         },
