@@ -205,7 +205,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         if(parsedMovie.release){
             movieObj.release = new Date(
                 parsedMovie.release.substring(4, 0),
-                parsedMovie.release.substring(7, 5) - 1,
+                +parsedMovie.release.substring(7, 5) - 1,
                 parsedMovie.release.substring(10, 8)
             );
         }
@@ -252,7 +252,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
             if(parsedMovie.release){
                 movie.release = new Date(
                     parsedMovie.release.substring(4, 0),
-                    parsedMovie.release.substring(7, 5) - 1,
+                    +parsedMovie.release.substring(7, 5) - 1,
                     parsedMovie.release.substring(10, 8)
                 );
             }
@@ -317,18 +317,192 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.post('/movie/performance/:movieId', async (req, res) => {
+    app.post('/movie/performance/:movieId', verifyToken, async (req, res) => {
         const movieId = req.params.movieId;
 
         try {
-            const movie = await Movie.findOne({'_id': movieId});
+            let movies = await Movie.find(
+                {
+                    'performances.cinemaId': req.body.cinemaId,
+                    'performances.hallId': req.body.hallId
+                },
+                {
+                    'status': 1,
+                    'length': 1,
+                    'performances': 1,
+                }
+            );
+            let errorMessage = '';
 
-            movie.performances.push(req.body);
+            let startDateTime = new Date(
+                req.body.startDate.substring(4, 0),
+                +req.body.startDate.substring(7, 5) - 1,
+                req.body.startDate.substring(10, 8),
+                req.body.startTime.substring(2, 0),
+                req.body.startTime.substring(5, 3),
+            );
+            movies.forEach(movie => {
+                if(movie.status == 'Expired') errorMessage = 'Movie is expired';
+
+                let cleanUpEndDateTime = new Date(startDateTime);
+                cleanUpEndDateTime.setHours(
+                    startDateTime.getHours() + +movie.length.substring(2, 0) + 1,
+                    startDateTime.getMinutes() + +movie.length.substring(5, 3)
+                );
+                if(movie._id == movieId && !movie.length)
+                    errorMessage = 'Cannot create performance without a movie length';
+
+                if(movie.performances.length > 0){
+                    movie.performances.forEach(performance => {
+                        if(
+                            (
+                                startDateTime >= performance.start
+                                &&
+                                startDateTime < performance.cleanUpEnd
+                            )
+                            ||
+                            (
+                                cleanUpEndDateTime > performance.start
+                                &&
+                                cleanUpEndDateTime <= performance.cleanUpEnd
+                            )
+                        ) errorMessage = 'Start time overlaps with another performance in the same hall';
+                    });
+                }
+            });
+            if(errorMessage) return res.status(403).send({msg: errorMessage})
+
+            const cinema = await Cinema.findOne(
+                {
+                    '_id': req.body.cinemaId,
+                    'halls._id': req.body.hallId
+                },
+                {
+                    'address': 1,
+                    'halls.$': 1
+                }
+            );
+            let tickets = [];
+
+            cinema.halls[0].rows.forEach(row => {
+                row.seats.forEach(seat => {
+                    let ticket = {};
+
+                    if(row.type == 'Normal') ticket.price = req.body.prices.normal;
+                    else if(row.type == 'VIP') ticket.price = req.body.prices.vip;
+                    else ticket.price = req.body.prices.couple;
+                    ticket.row = row.name;
+                    ticket.seat = seat.name;
+                    ticket.status = 'Ready';
+
+                    tickets.push(ticket);
+                });
+            });
+
+            let movie = await Movie.findOne({'_id': movieId});
+
+            let cleanUpEndDateTime = new Date(startDateTime);
+            cleanUpEndDateTime.setHours(
+                startDateTime.getHours() + +movie.length.substring(2, 0) + 1,
+                startDateTime.getMinutes() + +movie.length.substring(5, 3)
+            );
+
+            let endDateTime = new Date(cleanUpEndDateTime);
+            endDateTime.setHours(endDateTime.getHours() - 1);
+
+            let numOfSeats = 0;
+            cinema.halls[0].rows.forEach(row => numOfSeats += row.seats.length);
+
+            let performance = {};
+            performance.start = startDateTime;
+            performance.end = endDateTime;
+            performance.cleanUpEnd = cleanUpEndDateTime;
+            performance.prices = req.body.prices;
+            performance.numOfSeats = numOfSeats;
+            performance.seatsLeft = numOfSeats;
+            performance.status = 'Available';
+            performance.cinemaId = cinema._id;
+            performance.address = cinema.address;
+            performance.hallId = req.body.hallId;
+            performance.tickets = tickets;
+
+            movie.performances.push(performance);
             await movie.save();
-    
+
             res.send();
         } catch (err) {
             console.log('failed to create performance: ', err);
+            res.status(500).send();
+        }
+    });
+
+    app.get('/movie/performances/names/:movieId', async (req, res) => {
+        const movieId = req.params.movieId;
+
+        try {
+            let movie = await Movie.findOne(
+                {'_id':  movieId},
+                {
+                    'performances._id': 1,
+                    'performances.start': 1,
+                    'performances.cleanUpEnd': 1
+                }
+            );
+            movie.performances.forEach(performance => {
+                if(performance.status == 'Expired')
+                    movie.performances.pull({'_id': performance._id});
+            });
+            res.send(movie.performances)
+        } catch (err) {
+            console.log('failed to retrieve performances: ', err);
+            res.status(500).send();
+        }
+    });
+
+    app.get('/movie/performance/:movieId/:performanceId', async (req, res) => {
+        const movieId = req.params.movieId;
+        const performanceId = req.params.performanceId;
+
+        Movie.findOne(
+            {
+                '_id':  movieId,
+                'performances._id': performanceId
+            },
+            'performances.$'
+        )
+        .then((movie) => res.send(movie.performances[0]))
+        .catch((err) => {
+            console.log('failed to retrieve performance: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.put('/movie/performance/:movieId/:performanceId', verifyToken, async (req, res) => {
+        const movieId = req.params.movieId;
+        const performanceId = req.params.performanceId;
+        console.log('hej');
+        Movie.updateOne(
+            {'_id': movieId, 'performances._id': performanceId},
+            {
+                '$set': {'performances.$.status': req.body.status}
+            }
+        )
+        .then(() => res.send())
+        .catch((err) => {
+            console.log('failed to update performance: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.delete('/movie/performance/:movieId', verifyToken, async (req, res) => {
+        const movieId = req.params.movieId;
+        try {
+            let movie = await Movie.findOne({'_id': movieId});
+            movie.performances.pull(req.body._id);
+            await movie.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to delete performance: ', err);
             res.status(500).send();
         }
     });
