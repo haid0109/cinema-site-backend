@@ -175,6 +175,20 @@ module.exports = function(connection){
             unique: true,
             sparse: true
         },
+        prices: {
+            normal: {
+                type: Number,
+                required: true
+            },
+            vip: {
+                type: Number,
+                required: true
+            },
+            couple: {
+                type: Number,
+                required: true
+            }
+        },
         numOfSeats: {
             type: Number,
             required: true,
