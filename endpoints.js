@@ -286,7 +286,40 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         });
     });
 
-    app.get('/movie/cards/:movieId/:cinemaId/:dateRange', async (req, res) => {
+    app.get('/movie/cards/:cinemaId/:date', async (req, res) => {
+        const cinemaId = req.params.cinemaId;
+        const date = new Date(JSON.parse(req.params.date));
+        const dateRange = {
+            daystart: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+            dayEnd: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
+        }
+
+        Movie.aggregate([
+            {'$project': {
+                'title': true,
+                'cover': true,
+                'length': true,
+                'performances': {'$filter': {
+                    'input': '$performances',
+                    'as': 'performance',
+                    'cond': {
+                        '$and': [
+                            {'$eq': ['$$performance.cinemaId', cinemaId]},
+                            {'$gte': ['$$performance.start', dateRange.daystart]},
+                            {'$lte': ['$$performance.start', dateRange.dayEnd]}
+                        ]
+                    }
+                }}
+            }}
+        ])
+        .then((cards) => res.send(cards))
+        .catch((err) => {
+            console.log('failed to retrieve movie card: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.get('/movie/card/:movieId/:cinemaId/:dateRange', async (req, res) => {
         const movieId = req.params.movieId;
         const cinemaId = req.params.cinemaId;
         const dateRange = req.params.dateRange;
@@ -310,7 +343,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
                 }}
             }}
         ])
-        .then((cards) => res.send(cards))
+        .then((card) => res.send(card))
         .catch((err) => {
             console.log('failed to retrieve movie cards: ', err);
             res.status(500).send();
@@ -365,6 +398,12 @@ module.exports.start = async function start(app, User, Cinema, Movie){
                                 cleanUpEndDateTime > performance.start
                                 &&
                                 cleanUpEndDateTime <= performance.cleanUpEnd
+                            )
+                            ||
+                            (
+                                startDateTime < performance.start
+                                &&
+                                cleanUpEndDateTime > performance.cleanUpEnd
                             )
                         ) errorMessage = 'Start time overlaps with another performance in the same hall';
                     });
@@ -448,10 +487,6 @@ module.exports.start = async function start(app, User, Cinema, Movie){
                     'performances.cleanUpEnd': 1
                 }
             );
-            movie.performances.forEach(performance => {
-                if(performance.status == 'Expired')
-                    movie.performances.pull({'_id': performance._id});
-            });
             res.send(movie.performances)
         } catch (err) {
             console.log('failed to retrieve performances: ', err);
@@ -480,7 +515,7 @@ module.exports.start = async function start(app, User, Cinema, Movie){
     app.put('/movie/performance/:movieId/:performanceId', verifyToken, async (req, res) => {
         const movieId = req.params.movieId;
         const performanceId = req.params.performanceId;
-        console.log('hej');
+
         Movie.updateOne(
             {'_id': movieId, 'performances._id': performanceId},
             {
