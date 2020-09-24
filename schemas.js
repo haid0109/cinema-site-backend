@@ -160,20 +160,14 @@ module.exports = function(connection){
         start: {
             type: Date,
             required: true,
-            unique: true,
-            sparse: true
         },
         end: {
             type: Date,
             required: true,
-            unique: true,
-            sparse: true
         },
         cleanUpEnd: {
             type: Date,
             required: true,
-            unique: true,
-            sparse: true
         },
         prices: {
             normal: {
