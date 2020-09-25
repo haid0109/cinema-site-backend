@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const {v4: uuidv4, stringify} = require('uuid');
+const {v4: uuidv4} = require('uuid');
 const otpGenerator = require('otp-generator');
 
 module.exports = function(connection){
