@@ -542,6 +542,52 @@ module.exports.start = async function start(app, User, Cinema, Movie){
         }
     });
 
+    app.get('/movie/tickets/:filters', async (req, res) => {
+        let filters = JSON.parse(req.params.filters);
+        let start = new Date(filters.start);
+
+        Movie.aggregate([
+            {'$match': {'_id': filters.movieId}},
+            {'$project': {
+                'performances': {'$filter': {
+                    'input': '$performances',
+                    'as': 'performance',
+                    'cond': {
+                        '$and': [
+                            {'$eq': ['$$performance.cinemaId', filters.cinemaId]},
+                            {'$eq': ['$$performance.start', start]}
+                        ]
+                    }
+                }}
+            }}
+        ])
+        .then((movies) => res.send(movies[0].performances[0].tickets))
+        .catch((err) => {
+            console.log('failed to retrieve tickets: ', err);
+            res.status(500).send();
+        });
+    });
+
+    app.put('/buy', async (req, res) => {
+        try {
+            let movie = await Movie.findOne(
+                {'performances.tickets._id': req.body.ticketId},
+                'performances.tickets.$._id'
+            );
+            movie.performances[0].tickets.forEach(ticket => {
+                if(ticket._id == req.body.ticketId){
+                    ticket.status = 'Sold';
+                    ticket.phoneNum = req.body.phoneNum;
+                }
+            });
+            await movie.save();
+            res.send();
+        } catch (err) {
+            console.log('failed to buy ticket: ', err);
+            res.status(500).send();
+        }
+    });
+
     app.post('/cinema', verifyToken, async (req, res) => {
         try {
             const cinema = new Cinema(req.body);
